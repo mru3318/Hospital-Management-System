@@ -51,7 +51,8 @@ const Layout = () => {
             Welcome Admin
           </h5>
           <ul className="navbar-nav navbar-nav-right">
-            <li className="nav-item dropdown d-none d-xl-inline-flex user-dropdown">
+            {/* Always show admin dropdown in header (including mobile) and place it before the mobile menu */}
+            <li className="nav-item dropdown user-dropdown me-2">
               <a
                 className="nav-link dropdown-toggle"
                 id="UserDropdown"
@@ -118,6 +119,8 @@ const Layout = () => {
                 <img src="assets/images/logo-mini.png" alt="logo" />
               </a>
             </li>
+            {/* Mobile: show admin avatar/name at top of the offcanvas sidebar */}
+            {/* Mobile admin block removed: admin actions are available via header dropdown */}
             {/* ################## */}
             <li className="nav-item nav-category">
               <span className="nav-link" />
@@ -1093,10 +1096,10 @@ const Layout = () => {
         </nav>
         {/* partial */}
         <div className="main-panel">
-          {/* <div className="content-wrapper mt-n3">
+          <div className="content-wrapper mt-n3">
             <Outlet />
-          </div> */}
-          <Outlet />
+          </div>
+          {/* <Outlet /> */}
 
           {/* content-wrapper ends */}
           {/* partial:partials/_footer.html */}
