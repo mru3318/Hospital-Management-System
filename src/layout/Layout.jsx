@@ -3,6 +3,15 @@ import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 const Layout = () => {
   const location = useLocation();
 
+  // Ensure the mobile hamburger always toggles the sidebar even if React mounts
+  // after the page DOMContentLoaded handlers ran. This avoids relying on
+  // external jQuery/bootstrap scripts for the offcanvas toggle.
+  const handleMobileToggle = (e) => {
+    e && e.preventDefault && e.preventDefault();
+    const sidebar = document.getElementById("sidebar");
+    if (sidebar) sidebar.classList.toggle("active");
+  };
+
   const isUiBasicOpen = location.pathname.startsWith("/add-new-employee");
   const isFormsOpen = location.pathname.startsWith("/add-doctor");
 
@@ -88,6 +97,9 @@ const Layout = () => {
             className="navbar-toggler navbar-toggler-right d-lg-none align-self-center"
             type="button"
             data-bs-toggle="offcanvas"
+            data-bs-target="#sidebar"
+            aria-controls="sidebar"
+            onClick={handleMobileToggle}
           >
             <span className="icon-menu" />
           </button>

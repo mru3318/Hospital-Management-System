@@ -13151,6 +13151,28 @@ fieldset:disabled .fc button,
   opacity: 0.5;
 }
 
+/* Project override: remove the dark/blurred backdrop that appears when the
+   offcanvas sidebar opens on mobile. Keeps the sidebar behavior but prevents
+   the page from being dimmed/blurred. */
+.offcanvas-backdrop {
+  background-color: transparent !important;
+  opacity: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  pointer-events: none !important; /* allow interacting with page while offcanvas open */
+}
+
+/* Also neutralize modal/backdrop overlays (in case other components create them) */
+.modal-backdrop,
+.modal-backdrop.show,
+.offcanvas-backdrop.show {
+  background-color: transparent !important;
+  opacity: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  pointer-events: none !important;
+}
+
 .offcanvas-header {
   display: -webkit-box;
   display: -ms-flexbox;
