@@ -119,8 +119,6 @@ const Layout = () => {
                 <img src="assets/images/logo-mini.png" alt="logo" />
               </a>
             </li>
-            {/* Mobile: show admin avatar/name at top of the offcanvas sidebar */}
-            {/* Mobile admin block removed: admin actions are available via header dropdown */}
             {/* ################## */}
             <li className="nav-item nav-category">
               <span className="nav-link" />
