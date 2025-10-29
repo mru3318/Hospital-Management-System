@@ -8,6 +8,11 @@ import AmbulanceAdd from "./components/ambulance/ambulance-add/AmbulanceAdd";
 import AmbulanceAssignment from "./components/ambulance/ambulance-assignment/AmbulanceAssignment";
 import AmbulanceDashboard from "./components/ambulance/ambulance-dashboard/AmbulanceDashboard";
 import AddDriver from "./components/ambulance/add-driver/AddDriver";
+import BedList from "./components/bed-manager/bed-list/BedList";
+import BedAssign from "./components/bed-manager/bed-assign/BedAssign";
+import AllottedBeds from "./components/bed-manager/alloted-beds/AllottedBeds";
+import AddBeds from "./components/bed-manager/add-beds/AddBeds";
+import AddRoom from "./components/bed-manager/add-room/AddRoom";
 
 function App() {
   const router = createBrowserRouter([
@@ -32,6 +37,8 @@ function App() {
           path: "manage-employees",
           element: <ManageEmployee />,
         },
+
+        // Ambulance Routes
         {
           path: "ambulance-add",
           element: <AmbulanceAdd />,
@@ -47,6 +54,28 @@ function App() {
         {
           path: "add-driver",
           element: <AddDriver />,
+        },
+
+        // Bed Manager Routes
+        {
+          path: "bed-list",
+          element: <BedList />,
+        },
+        {
+          path: "bed-assign",
+          element: <BedAssign />,
+        },
+        {
+          path: "allotted-beds",
+          element: <AllottedBeds />,
+        },
+        {
+          path: "add-beds",
+          element: <AddBeds />,
+        },
+        {
+          path: "add-room",
+          element: <AddRoom />,
         },
       ],
     },

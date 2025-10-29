@@ -449,14 +449,20 @@ const Layout = () => {
               >
                 <ul className="nav flex-column sub-menu">
                   <li className="nav-item">
-                    <a className="nav-link" href="add-new-bed.html">
+                    <NavLink className="nav-link" to="/add-beds">
                       Add New Bed
-                    </a>
+                    </NavLink>
                   </li>
                   <li className="nav-item">
-                    <a className="nav-link" href="bed-list.html">
-                      Manage Beds
-                    </a>
+                    <NavLink className="nav-link" to="/add-room">
+                      Add New Room
+                    </NavLink>
+                  </li>
+
+                  <li className="nav-item">
+                    <NavLink className="nav-link" to="/bed-list">
+                      Bed List
+                    </NavLink>
                   </li>
                 </ul>
               </div>
