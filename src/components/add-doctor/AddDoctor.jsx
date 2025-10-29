@@ -2,7 +2,7 @@ import "./AddDoctor.css";
 
 const AddDoctor = () => {
   return (
-    <div className="content-wrapper">
+    <>
       {/* ############################################################## */}
       <div className="form-card">
         <div className="form-header">
@@ -151,7 +151,7 @@ const AddDoctor = () => {
         </form>
       </div>
       {/* ####################################################################### */}
-    </div>
+    </>
   );
 };
 

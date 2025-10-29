@@ -4,6 +4,10 @@ import AddDoctor from "./components/add-doctor/AddDoctor";
 import AddNewEmployee from "./components/add-new-employee/AddNewEmployee";
 import AdminDashboard from "./components/admin-dashboard/AdminDashboard";
 import ManageEmployee from "./components/manage-employee/ManageEmployee";
+import AmbulanceAdd from "./components/ambulance/ambulance-add/AmbulanceAdd";
+import AmbulanceAssignment from "./components/ambulance/ambulance-assignment/AmbulanceAssignment";
+import AmbulanceDashboard from "./components/ambulance/ambulance-dashboard/AmbulanceDashboard";
+import AddDriver from "./components/ambulance/add-driver/AddDriver";
 
 function App() {
   const router = createBrowserRouter([
@@ -27,6 +31,22 @@ function App() {
         {
           path: "manage-employees",
           element: <ManageEmployee />,
+        },
+        {
+          path: "ambulance-add",
+          element: <AmbulanceAdd />,
+        },
+        {
+          path: "ambulance-assignment",
+          element: <AmbulanceAssignment />,
+        },
+        {
+          path: "ambulance-dashboard",
+          element: <AmbulanceDashboard />,
+        },
+        {
+          path: "add-driver",
+          element: <AddDriver />,
         },
       ],
     },
