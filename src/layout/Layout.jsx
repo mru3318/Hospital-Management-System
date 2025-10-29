@@ -1012,24 +1012,24 @@ const Layout = () => {
               >
                 <ul className="nav flex-column sub-menu">
                   <li className="nav-item">
-                    <a className="nav-link" href="/ambulance-dashboard">
+                    <NavLink className="nav-link" to="/ambulance-dashboard">
                       Ambulance Dashboard
-                    </a>
+                    </NavLink>
                   </li>
                   <li className="nav-item">
-                    <a className="nav-link" href="/ambulance-add">
+                    <NavLink className="nav-link" to="/ambulance-add">
                       Add New Ambulance
-                    </a>
+                    </NavLink>
                   </li>
                   <li className="nav-item">
-                    <a className="nav-link" href="/ambulance-assignment">
+                    <NavLink className="nav-link" to="/ambulance-assignment">
                       Ambulance Assignment
-                    </a>
+                    </NavLink>
                   </li>
                   <li className="nav-item">
-                    <a className="nav-link" href="/add-driver">
+                    <NavLink className="nav-link" to="/add-driver">
                       Add Driver
-                    </a>
+                    </NavLink>
                   </li>
                 </ul>
               </div>
