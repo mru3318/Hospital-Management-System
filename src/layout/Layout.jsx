@@ -33,7 +33,7 @@ const Layout = () => {
             />
           </a>
           <a className="navbar-brand brand-logo-mini" href="index.html">
-            <img src="assets/images/logo-mini.png" alt="logo" />
+            <img src="/assets/images/logo-mini.png" alt="logo" />
           </a>
           <button
             className="navbar-toggler navbar-toggler align-self-center"
@@ -155,7 +155,7 @@ const Layout = () => {
                 <ul className="nav flex-column sub-menu">
                   <li className="nav-item">
                     <NavLink
-                      to="/add-new-employee"
+                      to="add-new-employee"
                       className={({ isActive }) =>
                         "nav-link" + (isActive ? " active" : "")
                       }
@@ -164,7 +164,7 @@ const Layout = () => {
                     </NavLink>
                   </li>
                   <li className="nav-item">
-                    <NavLink className="nav-link" to="/manage-employees">
+                    <NavLink className="nav-link" to="manage-employees">
                       Manage Employee
                     </NavLink>
                   </li>
@@ -449,18 +449,18 @@ const Layout = () => {
               >
                 <ul className="nav flex-column sub-menu">
                   <li className="nav-item">
-                    <NavLink className="nav-link" to="/add-beds">
+                    <NavLink className="nav-link" to="add-beds">
                       Add New Bed
                     </NavLink>
                   </li>
                   <li className="nav-item">
-                    <NavLink className="nav-link" to="/add-room">
+                    <NavLink className="nav-link" to="add-room">
                       Add New Room
                     </NavLink>
                   </li>
 
                   <li className="nav-item">
-                    <NavLink className="nav-link" to="/bed-list">
+                    <NavLink className="nav-link" to="bed-list">
                       Bed List
                     </NavLink>
                   </li>
@@ -1018,22 +1018,22 @@ const Layout = () => {
               >
                 <ul className="nav flex-column sub-menu">
                   <li className="nav-item">
-                    <NavLink className="nav-link" to="/ambulance-dashboard">
+                    <NavLink className="nav-link" to="ambulance-dashboard">
                       Ambulance Dashboard
                     </NavLink>
                   </li>
                   <li className="nav-item">
-                    <NavLink className="nav-link" to="/ambulance-add">
+                    <NavLink className="nav-link" to="ambulance-add">
                       Add New Ambulance
                     </NavLink>
                   </li>
                   <li className="nav-item">
-                    <NavLink className="nav-link" to="/ambulance-assignment">
+                    <NavLink className="nav-link" to="ambulance-assignment">
                       Ambulance Assignment
                     </NavLink>
                   </li>
                   <li className="nav-item">
-                    <NavLink className="nav-link" to="/add-driver">
+                    <NavLink className="nav-link" to="add-driver">
                       Add Driver
                     </NavLink>
                   </li>
@@ -1088,14 +1088,14 @@ const Layout = () => {
               >
                 <ul className="nav flex-column sub-menu">
                   <li className="nav-item">
-                    <a className="nav-link" href="#">
+                    <NavLink className="nav-link" to="add-new-notice">
                       Add New Notice
-                    </a>
+                    </NavLink>
                   </li>
                   <li className="nav-item">
-                    <a className="nav-link" href="#">
+                    <NavLink className="nav-link" to="manage-notices">
                       Manage Notices
-                    </a>
+                    </NavLink>
                   </li>
                 </ul>
               </div>

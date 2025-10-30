@@ -1,9 +1,8 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "./layout/Layout";
 import AddDoctor from "./components/add-doctor/AddDoctor";
-import AddNewEmployee from "./components/add-new-employee/AddNewEmployee";
 import AdminDashboard from "./components/admin-dashboard/AdminDashboard";
-import ManageEmployee from "./components/manage-employee/ManageEmployee";
+import ManageEmployee from "./components/human-resorces/manage-employee/ManageEmployee";
 import AmbulanceAdd from "./components/ambulance/ambulance-add/AmbulanceAdd";
 import AmbulanceAssignment from "./components/ambulance/ambulance-assignment/AmbulanceAssignment";
 import AmbulanceDashboard from "./components/ambulance/ambulance-dashboard/AmbulanceDashboard";
@@ -15,9 +14,24 @@ import AddBeds from "./components/bed-manager/add-beds/AddBeds";
 import AddRoom from "./components/bed-manager/add-room/AddRoom";
 import LoginPage from "./components/auth/login/LoginPage";
 import ForgotPassword from "./components/auth/forgot-password/ForgotPassword";
+import ViewNotices from "./components/notice/manage-notice/view-notice/ViewNotices";
+import CreateNotice from "./components/notice/manage-notice/add-new-notice/CreateNotice";
+import EmployeeRegistration from "./components/human-resorces/add-new-employee/EmployeeRegistration";
 
 function App() {
   const router = createBrowserRouter([
+    {
+      path: "/",
+      element: <LoginPage />,
+    },
+    {
+      path: "forgot-password",
+      element: <ForgotPassword />,
+    },
+    {
+      path: "registration",
+      element: <EmployeeRegistration />,
+    },
     {
       path: "dashboard",
       element: <Layout />,
@@ -32,7 +46,7 @@ function App() {
         },
         {
           path: "add-new-employee",
-          element: <AddNewEmployee />,
+          element: <EmployeeRegistration />,
         },
 
         {
@@ -79,15 +93,17 @@ function App() {
           path: "add-room",
           element: <AddRoom />,
         },
+
+        // Notice Management Routes
+        {
+          path: "manage-notices",
+          element: <ViewNotices />,
+        },
+        {
+          path: "add-new-notice",
+          element: <CreateNotice />,
+        },
       ],
-    },
-    {
-      path: "/",
-      element: <LoginPage />,
-    },
-    {
-      path: "forgot-password",
-      element: <ForgotPassword />,
     },
   ]);
   return <RouterProvider router={router} />;
