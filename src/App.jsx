@@ -13,11 +13,13 @@ import BedAssign from "./components/bed-manager/bed-assign/BedAssign";
 import AllottedBeds from "./components/bed-manager/alloted-beds/AllottedBeds";
 import AddBeds from "./components/bed-manager/add-beds/AddBeds";
 import AddRoom from "./components/bed-manager/add-room/AddRoom";
+import LoginPage from "./components/auth/login/LoginPage";
+import ForgotPassword from "./components/auth/forgot-password/ForgotPassword";
 
 function App() {
   const router = createBrowserRouter([
     {
-      path: "/",
+      path: "dashboard",
       element: <Layout />,
       children: [
         {
@@ -78,6 +80,14 @@ function App() {
           element: <AddRoom />,
         },
       ],
+    },
+    {
+      path: "/",
+      element: <LoginPage />,
+    },
+    {
+      path: "forgot-password",
+      element: <ForgotPassword />,
     },
   ]);
   return <RouterProvider router={router} />;
