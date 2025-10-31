@@ -104,22 +104,22 @@ const EmployeeRegistration = () => {
   }, [formData.password, formData.confirmPassword]);
 
   // ---------------- Load States & Districts ----------------
-  useEffect(() => {
-    async function fetchStates() {
-      try {
-        const res = await fetch("/api/data/states");
-        if (!res.ok) throw new Error("Failed to load states");
-        const data = await res.json();
-        setStates(data);
-      } catch (err) {
-        console.error("Error:", err);
-        alert("Failed to load location data. Please try again later.");
-      } finally {
-        setLoadingStates(false);
-      }
-    }
-    fetchStates();
-  }, []);
+  // useEffect(() => {
+  //   async function fetchStates() {
+  //     try {
+  //       const res = await fetch("/api/data/states");
+  //       if (!res.ok) throw new Error("Failed to load states");
+  //       const data = await res.json();
+  //       setStates(data);
+  //     } catch (err) {
+  //       console.error("Error:", err);
+  //       alert("Failed to load location data. Please try again later.");
+  //     } finally {
+  //       setLoadingStates(false);
+  //     }
+  //   }
+  //   fetchStates();
+  // }, []);
 
   const handleStateChange = (e) => {
     const selectedState = e.target.value;
@@ -179,7 +179,16 @@ const EmployeeRegistration = () => {
       case "HR":
         return (
           <div id="hrFields" className="mt-3">
-            HR-specific fields here...
+            <h5>HR Specific Fields</h5>
+            <div className="mb-3">
+              <label className="form-label">Department</label>
+              <input
+                type="text"
+                name="department"
+                className="form-control"
+                onChange={handleChange}
+              />
+            </div>
           </div>
         );
       default:

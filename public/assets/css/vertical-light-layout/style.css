@@ -13151,28 +13151,6 @@ fieldset:disabled .fc button,
   opacity: 0.5;
 }
 
-/* Project override: remove the dark/blurred backdrop that appears when the
-   offcanvas sidebar opens on mobile. Keeps the sidebar behavior but prevents
-   the page from being dimmed/blurred. */
-.offcanvas-backdrop {
-  background-color: transparent !important;
-  opacity: 0 !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  pointer-events: none !important; /* allow interacting with page while offcanvas open */
-}
-
-/* Also neutralize modal/backdrop overlays (in case other components create them) */
-.modal-backdrop,
-.modal-backdrop.show,
-.offcanvas-backdrop.show {
-  background-color: transparent !important;
-  opacity: 0 !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  pointer-events: none !important;
-}
-
 .offcanvas-header {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -33913,12 +33891,14 @@ div.tagsinput span.tag a {
   .nav-item.active:not(.navbar-brand-mini-wrapper)
   > .nav-link
   .menu-title {
-  color: white;
+  /* Selected menu title should be black per UI request */
+  color: #000000;
   font-family: "Open Sans", sans-serif;
   font-weight: 600;
 }
 .sidebar .nav .nav-item.active:not(.navbar-brand-mini-wrapper) > .nav-link i {
-  color: white;
+  /* Keep selected menu icon color consistent with title */
+  color: #000000;
 }
 .sidebar
   .nav
@@ -34078,7 +34058,8 @@ div.tagsinput span.tag a {
   right: 0;
 }
 .sidebar .nav.sub-menu .nav-item .nav-link.active {
-  color: white;
+  /* Selected sub-menu links should also use black */
+  color: #000000;
   background: transparent;
   font-weight: 900;
 }
@@ -34126,7 +34107,8 @@ div.tagsinput span.tag a {
   .nav-item.active:not(.navbar-brand-mini-wrapper)
   > .nav-link
   .menu-title {
-  color: #38ce3c;
+  /* For light sidebar theme, selected menu title should be black */
+  color: #000000;
 }
 .sidebar-light
   .sidebar
@@ -34134,7 +34116,7 @@ div.tagsinput span.tag a {
   .nav-item.active:not(.navbar-brand-mini-wrapper)
   > .nav-link
   i {
-  color: #38ce3c;
+  color: #000000;
 }
 .sidebar-light
   .sidebar
@@ -35390,42 +35372,9 @@ div.tagsinput span.tag a {
   }
 }
 
-/* ===== Project override: make active nav links black ===== */
-/* Scoped to avoid altering Bootstrap tab/pill color semantics elsewhere. */
-/* Sidebar active links */
-.sidebar .nav .nav-link.active,
-.sidebar .nav .nav-item.active > .nav-link,
-.sidebar .nav.sub-menu .nav-item .nav-link.active {
-  color: #000 !important;
-}
-
-/* Navbar and other nav contexts */
-.navbar-nav .nav-link.active,
-.nav .nav-link.active,
-.nav-item .nav-link.active {
-  color: #000 !important;
-}
-
-/* Ensure icon color inside active link inherits black */
-.nav-link.active i,
-.nav-link.active .menu-icon,
-.nav-link.active .fa,
-.nav-link.active .icon-menu {
-  color: #000 !important;
-}
-
-/* For sidebar-light specific overrides */
-.sidebar-light
-  .sidebar
-  .nav
-  .nav-item.active:not(.navbar-brand-mini-wrapper)
-  > .nav-link
-  .menu-title,
-.sidebar-light
-  .sidebar
-  .nav
-  .nav-item.active:not(.navbar-brand-mini-wrapper)
-  > .nav-link
-  i {
-  color: #000 !important;
+/* Remove translucent backdrop created by Bootstrap offcanvas for mobile sidebar
+     We rely on a simple .active toggle for .sidebar-offcanvas; hide the
+     backdrop so clicking the mobile menu doesn't show the dim overlay. */
+.offcanvas-backdrop {
+  display: none !important;
 }

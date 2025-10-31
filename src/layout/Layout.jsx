@@ -22,12 +22,12 @@ const Layout = () => {
         <div className="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
           <a className="navbar-brand brand-logo" href="index.html">
             <img
-              src="assets/images/logo-main.png"
+              src="/assets/images/logo-main.png"
               alt="logo"
               className="logo-dark"
             />
             <img
-              src="assets/images/logo-light.svg"
+              src="/assets/images/logo-light.svg"
               alt="logo-light"
               className="logo-light"
             />
@@ -62,7 +62,7 @@ const Layout = () => {
               >
                 <img
                   className="img-xs rounded-circle ms-2"
-                  src="assets/images/profile-icon.jpg"
+                  src="/assets/images/profile-icon.jpg"
                   alt="Profile image"
                 />
                 <span className="font-weight-normal"> Admin </span>
@@ -74,7 +74,7 @@ const Layout = () => {
                 <div className="dropdown-header text-center">
                   <img
                     className="img-md rounded-circle"
-                    src="assets/images/profile-icon1.png"
+                    src="/assets/images/profile-icon1.png"
                     alt="Profile image"
                   />
                   <p className="mb-1 mt-3">Admin</p>
@@ -97,9 +97,6 @@ const Layout = () => {
           <button
             className="navbar-toggler navbar-toggler-right d-lg-none align-self-center"
             type="button"
-            data-bs-toggle="offcanvas"
-            data-bs-target="#sidebar"
-            aria-controls="sidebar"
             onClick={handleMobileToggle}
           >
             <span className="icon-menu" />
@@ -116,7 +113,7 @@ const Layout = () => {
                 className="nav-link navbar-brand brand-logo-mini"
                 href="index.html"
               >
-                <img src="assets/images/logo-mini.png" alt="logo" />
+                <img src="/assets/images/logo-mini.png" alt="logo" />
               </a>
             </li>
             {/* ################## */}
