@@ -2,9 +2,19 @@ import React, { useState, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { GenderOptions } from "../../../../constants";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchStates } from "../../../features/statesSlice";
 
 const EmployeeRegistration = () => {
-  const [states, setStates] = useState([]);
+  const dispatch = useDispatch();
+  const {
+    list: states,
+    status: statesStatus,
+    error: statesError,
+  } = useSelector((state) => state.states);
+
+  // console.log("States from Redux:", states);
+
   const [districts, setDistricts] = useState([]);
   const [passwordRules, setPasswordRules] = useState({
     uppercase: false,
@@ -61,6 +71,13 @@ const EmployeeRegistration = () => {
       alert("Registration submitted successfully!");
     },
   });
+
+  // fetch states
+  useEffect(() => {
+    if (statesStatus === "idle") {
+      dispatch(fetchStates());
+    }
+  }, [dispatch, statesStatus]);
 
   // ---------------- Handle Change ----------------
   const handleChange = (e) => {
@@ -488,12 +505,24 @@ const EmployeeRegistration = () => {
                   <label htmlFor="state" className="form-label">
                     State
                   </label>
-                  <select id="state" name="state" className="form-select">
-                    <option value>Select State</option>
-                    <option value="Maharashtra">Maharashtra</option>
-                    <option value="Karnataka">Karnataka</option>
-                    <option value="Gujarat">Gujarat</option>
-                    <option value="Madhya Pradesh">Madhya Pradesh</option>
+                  <select
+                    id="state"
+                    name="state"
+                    className="form-select"
+                    onChange={handleStateChange}
+                    value={formik.values.state}
+                  >
+                    <option value="">Select State</option>
+                    {statesStatus === "loading" && <option>Loading...</option>}
+                    {statesStatus === "failed" && (
+                      <option>Error loading states</option>
+                    )}
+                    {statesStatus === "succeeded" &&
+                      states.map((s, i) => (
+                        <option key={i} value={s.state}>
+                          {s.state}
+                        </option>
+                      ))}
                   </select>
                 </div>
 
@@ -501,12 +530,20 @@ const EmployeeRegistration = () => {
                   <label htmlFor="district" className="form-label">
                     District
                   </label>
-                  <select id="district" name="district" className="form-select">
-                    <option value>Select District</option>
-                    {/* Example Districts */}
-                    <option value="Nagpur">Nagpur</option>
-                    <option value="Pune">Pune</option>
-                    <option value="Mumbai">Mumbai</option>
+                  <select
+                    id="district"
+                    name="district"
+                    className="form-select"
+                    onChange={handleChange}
+                    value={formik.values.district}
+                    disabled={!formik.values.state}
+                  >
+                    <option value="">Select District</option>
+                    {districts.map((d, idx) => (
+                      <option key={idx} value={d}>
+                        {d}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -592,7 +629,7 @@ const EmployeeRegistration = () => {
               >
                 Register
               </button>
-              <button type="reset" className="btn btn-danger px-4">
+              <button type="reset" className="btn btn-secondary px-4">
                 Reset
               </button>
             </div>
