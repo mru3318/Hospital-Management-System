@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { BloodGroupOptions, GenderOptions } from "../../../../constants";
+import {
+  BloodGroupOptions,
+  ExperienceLevel,
+  GenderOptions,
+} from "../../../../constants";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchStates } from "../../../features/statesSlice";
 import { IdProofTypeOptions } from "../../../../constants";
 import { RoleNameOptions } from "../../../../constants";
+import { registerEmployee } from "../../../features/employeeSlice";
 
 const EmployeeRegistration = () => {
   const dispatch = useDispatch();
-  const {
-    list: states,
-    status: statesStatus,
-    error: statesError,
-  } = useSelector((state) => state.states);
-
-  // console.log("States from Redux:", states);
+  const { list: states, status: statesStatus } = useSelector(
+    (state) => state.states
+  );
 
   const [districts, setDistricts] = useState([]);
   const [passwordRules, setPasswordRules] = useState({
@@ -25,7 +26,9 @@ const EmployeeRegistration = () => {
   });
   const [passwordMatch, setPasswordMatch] = useState("");
 
-  // ---------------- Formik Setup ----------------
+  const { departments } = useSelector((state) => state.departments);
+
+  // 1) Include all expected keys in initialValues (use consistent names)
   const formik = useFormik({
     initialValues: {
       firstName: "",
@@ -41,15 +44,20 @@ const EmployeeRegistration = () => {
       addressLine1: "",
       addressLine2: "",
       idProofType: "",
+      idProof: null,
+      joiningDate: "", // unified name (was joiningdate previously)
       state: "",
       district: "",
       city: "",
       country: "India",
       pincode: "",
-      role: "",
+      role: "", // will be option value (string) — convert to number before sending
       profilePic: null,
+      bloodGroup: "",
+      experience: "",
+      qualification: "",
+      category: "",
     },
-
     validationSchema: Yup.object({
       firstName: Yup.string().required("First name is required"),
       lastName: Yup.string().required("Last name is required"),
@@ -68,67 +76,124 @@ const EmployeeRegistration = () => {
         .oneOf([Yup.ref("password")], "Passwords must match")
         .required("Please confirm your password"),
     }),
+    // 2) Use Formik onSubmit to dispatch the thunk; convert role to number
+    onSubmit: async (values, { setSubmitting, resetForm }) => {
+      setSubmitting(true);
+      try {
+        console.log("✅ Raw Formik Values:", values);
 
-    onSubmit: (values) => {
-      console.log("Submitted Data:", values);
-      alert("Registration submitted successfully!");
+        // Build structured payload (matches your working payload)
+        const payload = {
+          username: values.username,
+          email: values.email,
+          password: values.password,
+          confirmPassword: values.confirmPassword,
+          firstName: values.firstName,
+          lastName: values.lastName,
+          mobileNumber: values.mobileNumber,
+          gender: values.gender,
+          dob: values.dob,
+          age: Number(values.age),
+          idProofType: values.idProofType,
+          joiningDate: values.joiningDate,
+          bloodGroup: values.bloodGroup,
+          roleId: Number(values.role), // role → roleId
+          addressDto: {
+            addressLine1: values.addressLine1,
+            addressLine2: values.addressLine2,
+            city: values.city,
+            district: values.district,
+            state: values.state,
+            pincode: values.pincode,
+            country: values.country || "India",
+          },
+        };
+
+        //fetch department from redux store
+        const selectedDepartment = departments.find(
+          (dept) => dept.department_name === values.department
+        );
+        const departmentId = selectedDepartment ? selectedDepartment.id : null;
+
+        // Add role-based nested DTO (example for Doctor)
+        if (String(values.role) === "3") {
+          payload.doctorDto = {
+            specialization: values.specialization,
+            experience: values.experience,
+            qualifications: values.qualification,
+            licenseNumber: values.licenseNumber,
+            departmentId: values.department ? Number(values.department) : null,
+          };
+        }
+
+        // Build FormData for files + payload JSON
+        const formData = new FormData();
+
+        // Append JSON fields as strings
+        formData.append(
+          "data",
+          new Blob([JSON.stringify(payload)], { type: "application/json" })
+        );
+
+        // Append file uploads separately
+        if (values.profilePic instanceof File) {
+          formData.append("profilePic", values.profilePic);
+        }
+        if (values.idProof instanceof File) {
+          formData.append("idProof", values.idProof);
+        }
+
+        // Debug
+        for (let [k, v] of formData.entries()) {
+          console.log("📦 FormData entry:", k, v);
+        }
+
+        // Dispatch Redux thunk
+        await dispatch(registerEmployee(formData));
+
+        resetForm();
+      } catch (err) {
+        console.error("❌ Submit Error:", err);
+      } finally {
+        setSubmitting(false);
+      }
     },
   });
 
   // fetch states
   useEffect(() => {
-    if (statesStatus === "idle") {
-      dispatch(fetchStates());
-    }
+    if (statesStatus === "idle") dispatch(fetchStates());
   }, [dispatch, statesStatus]);
 
-  // ---------------- Handle Change ----------------
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-
-    if (files) {
-      const file = files[0];
-      if (file.size > 5 * 1024 * 1024) {
-        alert(`File "${file.name}" exceeds 5 MB limit!`);
-        return;
-      }
-      formik.setFieldValue(name, file);
-    } else {
-      formik.setFieldValue(name, value);
+  // generic change for non-file inputs (we mostly use formik.handleChange directly)
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    if (!files || !files.length) return;
+    const file = files[0];
+    if (file.size > 5 * 1024 * 1024) {
+      alert(`File "${file.name}" exceeds 5 MB limit!`);
+      return;
     }
+    formik.setFieldValue(name, file);
   };
 
-  // ---------------- Age Calculation ----------------
+  // Age calc (unchanged)
   useEffect(() => {
     if (!formik.values.dob) return;
-
     const dob = new Date(formik.values.dob);
     const today = new Date();
-
-    if (dob > today) {
-      alert("Date of birth cannot be in the future!");
-      formik.setFieldValue("dob", "");
+    if (dob > today || dob.getFullYear() < 1900) {
       formik.setFieldValue("age", "");
       return;
     }
-
-    if (dob.getFullYear() < 1900) {
-      alert("Please enter a valid date of birth!");
-      formik.setFieldValue("dob", "");
-      formik.setFieldValue("age", "");
-      return;
-    }
-
     let age = today.getFullYear() - dob.getFullYear();
     const m = today.getMonth() - dob.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
-      age--;
-    }
-
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
     formik.setFieldValue("age", age);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formik.values.dob]);
 
-  // ---------------- Password Rule Validation ----------------
+  // Password rules
   useEffect(() => {
     const { password, confirmPassword } = formik.values;
     setPasswordRules({
@@ -136,88 +201,82 @@ const EmployeeRegistration = () => {
       number: /\d/.test(password),
       special: /[@$!%*?&#~]/.test(password),
     });
-
-    if (!confirmPassword) {
-      setPasswordMatch("");
-    } else if (password === confirmPassword) {
-      setPasswordMatch("✅ Passwords match");
-    } else {
-      setPasswordMatch("❌ Passwords do not match");
-    }
+    if (!confirmPassword) setPasswordMatch("");
+    else
+      setPasswordMatch(
+        password === confirmPassword
+          ? "✅ Passwords match"
+          : "❌ Passwords do not match"
+      );
   }, [formik.values.password, formik.values.confirmPassword]);
 
-  // ---------------- State Change ----------------
+  // State -> district
   const handleStateChange = (e) => {
     const selectedState = e.target.value;
     formik.setFieldValue("state", selectedState);
     formik.setFieldValue("district", "");
-
     if (!selectedState) {
       setDistricts([]);
       return;
     }
-
     const selected = states.find((s) => s.state === selectedState);
     setDistricts(selected ? selected.districts : []);
   };
 
-  // ---------------- File Upload ----------------
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file && file.size > 5 * 1024 * 1024) {
-      alert(`File "${file.name}" exceeds 5 MB limit!`);
-      return;
-    }
-    formik.setFieldValue("profilePic", file);
-  };
-
-  // ---------------- Reset Form ----------------
-  const handleReset = () => {
-    formik.resetForm();
-    setDistricts([]);
-  };
-
-  // ---------------- Role-Based Fields ----------------
+  // Role-specific fields renderer remains but uses the canonical keys (experience, qualification, category)
   const renderRoleSpecificFields = () => {
     const { role } = formik.values;
-    // find human-friendly label for the selected role (RoleNameOptions stores values like 'DOCTOR')
-    const roleLabelObj = RoleNameOptions?.find((r) => r.value === role);
-    const roleLabel = roleLabelObj ? roleLabelObj.label : role;
-    const commonFields = (fields) => (
-      <div className="row mt-3">
-        {fields.map((f, idx) => (
-          <div className="mb-3 col-md-6" key={idx}>
-            <label className="form-label">{f.label}</label>
-            {f.type === "select" ? (
-              <select
-                name={f.name}
-                className="form-select"
-                onChange={handleChange}
-                value={formik.values[f.name] || ""}
-              >
-                <option value="">Select {f.label}</option>
-                {f.options?.map((opt, i) => (
-                  <option key={i} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type="text"
-                name={f.name}
-                className="form-control"
-                onChange={handleChange}
-                value={formik.values[f.name] || ""}
-              />
-            )}
-          </div>
-        ))}
-      </div>
+    const roleLabelObj = RoleNameOptions?.find(
+      (r) => String(r.value) === String(role)
     );
+    const roleLabel = roleLabelObj ? roleLabelObj.label : role;
+    const commonFields = (fields) =>
+      fields.map((field) => (
+        <div className="mb-3" key={field.name}>
+          <label className="form-label">{field.label}</label>
 
-    switch (role) {
-      case "DOCTOR":
+          {field.name === "experience" ? (
+            <select
+              name={field.name}
+              value={formik.values[field.name]}
+              onChange={formik.handleChange}
+              className="form-select"
+            >
+              <option value="">Select Experience</option>
+              {ExperienceLevel.map((exp) => (
+                <option key={exp.value} value={exp.value}>
+                  {exp.label}
+                </option>
+              ))}
+            </select>
+          ) : field.name === "department" ? (
+            <select
+              name={field.name}
+              value={formik.values[field.name]}
+              onChange={formik.handleChange}
+              className="form-select"
+            >
+              <option value="">Select Department</option>
+              {departments?.map((dept) => (
+                <option key={dept.id} value={dept.department_name}>
+                  {dept.department_name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              name={field.name}
+              value={formik.values[field.name]}
+              onChange={formik.handleChange}
+              className="form-control"
+            />
+          )}
+        </div>
+      ));
+
+    switch (String(role)) {
+      case "3":
         return (
           <div id="doctorFields" className="mt-3">
             <h5>{roleLabel} Specific Fields</h5>
@@ -230,22 +289,50 @@ const EmployeeRegistration = () => {
             ])}
           </div>
         );
-      case "HR":
-      case "RECEPTIONIST":
-      case "PHARMACIST":
-      case "HEAD_NURSE":
-      case "ACCOUNTANT":
-      case "INSURANCE":
+      case "7":
+      case "10":
+      case "5":
+      case "4":
+      case "6":
+      case "9":
         return (
-          <div id={`${role.toLowerCase()}Fields`} className="mt-3">
+          <div id={`${role}Fields`} className="mt-3">
             <h5>{roleLabel} Specific Fields</h5>
-            {commonFields([
-              { label: "Experience", name: "experience" },
-              { label: "Qualification", name: "qualification" },
-            ])}
+
+            {/* Experience Field */}
+            <div className="row">
+              <div className="mb-3 col-md-6">
+                <label className="form-label">Experience</label>
+                <select
+                  name="experience"
+                  value={formik.values.experience}
+                  onChange={formik.handleChange}
+                  className="form-select"
+                >
+                  <option value="">Select Experience</option>
+                  {ExperienceLevel.map((exp) => (
+                    <option key={exp.value} value={exp.value}>
+                      {exp.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Qualification Field */}
+              <div className="mb-3 col-md-6">
+                <label className="form-label">Qualification</label>
+                <input
+                  type="text"
+                  name="qualification"
+                  value={formik.values.qualification}
+                  onChange={formik.handleChange}
+                  className="form-control"
+                />
+              </div>
+            </div>
           </div>
         );
-      case "LABORATORIST":
+      case "8":
         return (
           <div id="labTechFields" className="mt-3">
             <h5>{roleLabel} Specific Fields</h5>
@@ -266,454 +353,477 @@ const EmployeeRegistration = () => {
     }
   };
 
-  // ---------------- JSX Render ----------------
+  // JSX — ensure every input uses value & onChange from formik, and file inputs call handleFileChange
   return (
-    <div className="container-fluid px-5 py-4">
-      <div className="card shadow border-0 w-100">
-        {/* Header */}
-        <div
-          className="card-header text-white text-center py-3"
-          style={{ backgroundColor: "#01C0C8" }}
+    <div className="card shadow border-0 w-100">
+      <div
+        className="card-header text-white text-center py-3"
+        style={{ backgroundColor: "#01C0C8" }}
+      >
+        <h3 className="mb-0">
+          <i className="fa-solid fa-user-plus" /> Employee Registration
+        </h3>
+      </div>
+
+      <div className="card-body px-5 py-4">
+        {/* Use formik.handleSubmit on form */}
+        <form
+          onSubmit={formik.handleSubmit}
+          onReset={() => {
+            formik.resetForm();
+            setDistricts([]);
+          }}
         >
-          <h3 className="mb-0">
-            <i className="fa-solid fa-user-plus" /> Employee Registration
-          </h3>
-        </div>
+          {/* Name Fields */}
+          <div className="row mb-3">
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">
+                First Name <span style={{ color: "red" }}>*</span>
+              </label>
+              <input
+                type="text"
+                name="firstName"
+                value={formik.values.firstName}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`form-control ${
+                  formik.touched.firstName && formik.errors.firstName
+                    ? "is-invalid"
+                    : ""
+                }`}
+              />
+              <div className="invalid-feedback">{formik.errors.firstName}</div>
+            </div>
 
-        {/* Form Body */}
-        <div className="card-body px-5 py-4">
-          <form onSubmit={formik.handleSubmit} onReset={handleReset}>
-            {/* Name Fields */}
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">
+                Last Name <span style={{ color: "red" }}>*</span>
+              </label>
+              <input
+                type="text"
+                name="lastName"
+                value={formik.values.lastName}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`form-control ${
+                  formik.touched.lastName && formik.errors.lastName
+                    ? "is-invalid"
+                    : ""
+                }`}
+              />
+              <div className="invalid-feedback">{formik.errors.lastName}</div>
+            </div>
+          </div>
+
+          {/* Contact Fields */}
+          <div className="row mb-3">
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">
+                Mobile No <span style={{ color: "red" }}>*</span>
+              </label>
+              <input
+                type="text"
+                name="mobileNumber"
+                value={formik.values.mobileNumber}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`form-control ${
+                  formik.touched.mobileNumber && formik.errors.mobileNumber
+                    ? "is-invalid"
+                    : ""
+                }`}
+              />
+              <div className="invalid-feedback">
+                {formik.errors.mobileNumber}
+              </div>
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">
+                Email <span style={{ color: "red" }}>*</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`form-control ${
+                  formik.touched.email && formik.errors.email
+                    ? "is-invalid"
+                    : ""
+                }`}
+              />
+              <div className="invalid-feedback">{formik.errors.email}</div>
+            </div>
+          </div>
+
+          {/* username */}
+          <div className="row mb-3">
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">
+                Username <span style={{ color: "red" }}>*</span>
+              </label>
+              <input
+                type="text"
+                name="username"
+                value={formik.values.username}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`form-control ${
+                  formik.touched.username && formik.errors.username
+                    ? "is-invalid"
+                    : ""
+                }`}
+              />
+              <div className="invalid-feedback">{formik.errors.username}</div>
+            </div>
+          </div>
+
+          {/* Password Fields */}
+          <div className="row mb-3">
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">
+                Password <span style={{ color: "red" }}>*</span>
+              </label>
+              <input
+                type="password"
+                name="password"
+                value={formik.values.password}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`form-control ${
+                  formik.touched.password && formik.errors.password
+                    ? "is-invalid"
+                    : ""
+                }`}
+              />
+              <div className="invalid-feedback">{formik.errors.password}</div>
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">
+                Confirm Password <span style={{ color: "red" }}>*</span>
+              </label>
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formik.values.confirmPassword}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`form-control ${
+                  formik.touched.confirmPassword &&
+                  formik.errors.confirmPassword
+                    ? "is-invalid"
+                    : ""
+                }`}
+              />
+              <div className="invalid-feedback">
+                {formik.errors.confirmPassword}
+              </div>
+              {passwordMatch && (
+                <small
+                  className="form-text"
+                  style={{
+                    color: passwordMatch.includes("✅") ? "green" : "red",
+                  }}
+                >
+                  {passwordMatch}
+                </small>
+              )}
+            </div>
+          </div>
+
+          {/* Password Rules */}
+          <ul className="list-unstyled small mb-4">
+            <li style={{ color: passwordRules.uppercase ? "green" : "red" }}>
+              Must include at least one uppercase letter
+            </li>
+            <li style={{ color: passwordRules.number ? "green" : "red" }}>
+              Must include one number
+            </li>
+            <li style={{ color: passwordRules.special ? "green" : "red" }}>
+              Must include one special character
+            </li>
+          </ul>
+
+          {/* Gender / DOB / Age */}
+          <div className="row mb-3">
+            <div className="col-md-4">
+              <label className="form-label fw-semibold">Gender</label>
+              <select
+                name="gender"
+                className="form-select"
+                value={formik.values.gender}
+                onChange={formik.handleChange}
+              >
+                <option value="">Select Gender</option>
+                {GenderOptions?.map((g, idx) => (
+                  <option key={idx} value={g.value || g}>
+                    {g.label || g}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="col-md-4">
+              <label className="form-label fw-semibold">Date of Birth</label>
+              <input
+                type="date"
+                name="dob"
+                value={formik.values.dob}
+                onChange={formik.handleChange}
+                className="form-control"
+              />
+            </div>
+
+            <div className="col-md-4">
+              <label className="form-label fw-semibold">Age</label>
+              <input
+                type="text"
+                name="age"
+                value={formik.values.age}
+                readOnly
+                className="form-control"
+              />
+            </div>
+          </div>
+
+          {/* Joining Date & Blood Group */}
+          <div className="row mb-3">
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">Joining Date</label>
+              <input
+                type="date"
+                name="joiningDate"
+                value={formik.values.joiningDate}
+                onChange={formik.handleChange}
+                className="form-control"
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">Blood Group</label>
+              <select
+                name="bloodGroup"
+                className="form-select"
+                value={formik.values.bloodGroup}
+                onChange={formik.handleChange}
+              >
+                <option value="">Select Blood Group</option>
+                {BloodGroupOptions?.map((group, idx) => (
+                  <option key={idx} value={group.value || group}>
+                    {group.label || group}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Address */}
+          <div className="border rounded p-3 mb-3">
+            <h5 className="fw-bold mb-3">Address Details</h5>
             <div className="row mb-3">
               <div className="col-md-6">
-                <label className="form-label fw-semibold">
-                  First Name <span style={{ color: "red" }}>*</span>
+                <label htmlFor="addressLine1" className="form-label">
+                  Address Line 1
                 </label>
                 <input
                   type="text"
-                  name="firstName"
-                  value={formik.values.firstName}
+                  id="addressLine1"
+                  name="addressLine1"
+                  className="form-control"
+                  placeholder="Enter Address Line 1"
+                  value={formik.values.addressLine1}
                   onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  className={`form-control ${
-                    formik.touched.firstName && formik.errors.firstName
-                      ? "is-invalid"
-                      : ""
-                  }`}
                 />
-                <div className="invalid-feedback">
-                  {formik.errors.firstName}
-                </div>
               </div>
+              <div className="col-md-6">
+                <label htmlFor="addressLine2" className="form-label">
+                  Address Line 2
+                </label>
+                <input
+                  type="text"
+                  id="addressLine2"
+                  name="addressLine2"
+                  className="form-control"
+                  placeholder="Enter Address Line 2"
+                  value={formik.values.addressLine2}
+                  onChange={formik.handleChange}
+                />
+              </div>
+            </div>
 
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">
-                  Last Name <span style={{ color: "red" }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formik.values.lastName}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  className={`form-control ${
-                    formik.touched.lastName && formik.errors.lastName
-                      ? "is-invalid"
-                      : ""
-                  }`}
-                />
-                <div className="invalid-feedback">{formik.errors.lastName}</div>
-              </div>
-            </div>
-            {/* Contact Fields */}
-            <div className="row mb-3">
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">
-                  Mobile No <span style={{ color: "red" }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  name="mobileNumber"
-                  value={formik.values.mobileNumber}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  className={`form-control ${
-                    formik.touched.mobileNumber && formik.errors.mobileNumber
-                      ? "is-invalid"
-                      : ""
-                  }`}
-                />
-                <div className="invalid-feedback">
-                  {formik.errors.mobileNumber}
-                </div>
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">
-                  Email <span style={{ color: "red" }}>*</span>
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formik.values.email}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  className={`form-control ${
-                    formik.touched.email && formik.errors.email
-                      ? "is-invalid"
-                      : ""
-                  }`}
-                />
-                <div className="invalid-feedback">{formik.errors.email}</div>
-              </div>
-            </div>
-            {/* username field */}
-            <div class="row mb-3">
-              <div className=" col-md-6">
-                <label className="form-label fw-semibold">
-                  Username <span style={{ color: "red" }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  name="username"
-                  value={formik.values.username}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  className={`form-control ${
-                    formik.touched.username && formik.errors.username
-                      ? "is-invalid"
-                      : ""
-                  }`}
-                />
-                <div className="invalid-feedback">{formik.errors.username}</div>
-              </div>
-            </div>
-            {/* Password Fields */}
-            <div className="row mb-3">
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">
-                  Password <span style={{ color: "red" }}>*</span>
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formik.values.password}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  className={`form-control ${
-                    formik.touched.password && formik.errors.password
-                      ? "is-invalid"
-                      : ""
-                  }`}
-                />
-                <div className="invalid-feedback">{formik.errors.password}</div>
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">
-                  Confirm Password <span style={{ color: "red" }}>*</span>
-                </label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={formik.values.confirmPassword}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  className={`form-control ${
-                    formik.touched.confirmPassword &&
-                    formik.errors.confirmPassword
-                      ? "is-invalid"
-                      : ""
-                  }`}
-                />
-                <div className="invalid-feedback">
-                  {formik.errors.confirmPassword}
-                </div>
-                {passwordMatch && (
-                  <small
-                    className="form-text"
-                    style={{
-                      color: passwordMatch.includes("✅") ? "green" : "red",
-                    }}
-                  >
-                    {passwordMatch}
-                  </small>
-                )}
-              </div>
-            </div>
-            {/* Password Rules */}
-            <ul className="list-unstyled small mb-4">
-              <li style={{ color: passwordRules.uppercase ? "green" : "red" }}>
-                Must include at least one uppercase letter
-              </li>
-              <li style={{ color: passwordRules.number ? "green" : "red" }}>
-                Must include one number
-              </li>
-              <li style={{ color: passwordRules.special ? "green" : "red" }}>
-                Must include one special character
-              </li>
-            </ul>
-            {/* Gender / DOB / Age */}
             <div className="row mb-3">
               <div className="col-md-4">
-                <label className="form-label fw-semibold">Gender</label>
+                <label htmlFor="state" className="form-label">
+                  State
+                </label>
                 <select
-                  name="gender"
+                  id="state"
+                  name="state"
                   className="form-select"
-                  value={formik.values.gender}
-                  onChange={formik.handleChange}
+                  onChange={handleStateChange}
+                  value={formik.values.state}
                 >
-                  <option value="">Select Gender</option>
-                  {GenderOptions?.map((g, idx) => (
-                    <option key={idx} value={g.value || g}>
-                      {g.label || g}
+                  <option value="">Select State</option>
+                  {statesStatus === "loading" && <option>Loading...</option>}
+                  {statesStatus === "failed" && (
+                    <option>Error loading states</option>
+                  )}
+                  {statesStatus === "succeeded" &&
+                    states.map((s, i) => (
+                      <option key={i} value={s.state}>
+                        {s.state}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="col-md-4">
+                <label htmlFor="district" className="form-label">
+                  District
+                </label>
+                <select
+                  id="district"
+                  name="district"
+                  className="form-select"
+                  onChange={formik.handleChange}
+                  value={formik.values.district}
+                  disabled={!formik.values.state}
+                >
+                  <option value="">Select District</option>
+                  {districts.map((d, idx) => (
+                    <option key={idx} value={d}>
+                      {d}
                     </option>
                   ))}
                 </select>
               </div>
+
               <div className="col-md-4">
-                <label className="form-label fw-semibold">Date of Birth</label>
-                <input
-                  type="date"
-                  name="dob"
-                  value={formik.values.dob}
-                  onChange={formik.handleChange}
-                  className="form-control"
-                />
-              </div>
-              <div className="col-md-4">
-                <label className="form-label fw-semibold">Age</label>
+                <label htmlFor="city" className="form-label">
+                  City
+                </label>
                 <input
                   type="text"
-                  name="age"
-                  value={formik.values.age}
-                  readOnly
+                  id="city"
+                  name="city"
                   className="form-control"
+                  value={formik.values.city}
+                  onChange={formik.handleChange}
                 />
               </div>
             </div>
-            {/* Address */}
-            <div className="border rounded p-3 mb-3">
-              <h5 className="fw-bold mb-3">Address Details</h5>
-              <div className="row mb-3">
-                <div className="col-md-6">
-                  <label htmlFor="addressLine1" className="form-label">
-                    Address Line 1
-                  </label>
-                  <input
-                    type="text"
-                    id="addressLine1"
-                    name="addressLine1"
-                    className="form-control"
-                    placeholder="Enter Address Line 1"
-                  />
-                </div>
-                <div className="col-md-6 mt-3 mt-md-0">
-                  <label htmlFor="addressLine2" className="form-label">
-                    Address Line 2
-                  </label>
-                  <input
-                    type="text"
-                    id="addressLine2"
-                    name="addressLine2"
-                    className="form-control"
-                    placeholder="Enter Address Line 2"
-                  />
-                </div>
-              </div>
-              {/* State / District */}
-              <div className="row mb-3">
-                <div className="col-md-4">
-                  <label htmlFor="state" className="form-label">
-                    State
-                  </label>
-                  <select
-                    id="state"
-                    name="state"
-                    className="form-select"
-                    onChange={handleStateChange}
-                    value={formik.values.state}
-                  >
-                    <option value="">Select State</option>
-                    {statesStatus === "loading" && <option>Loading...</option>}
-                    {statesStatus === "failed" && (
-                      <option>Error loading states</option>
-                    )}
-                    {statesStatus === "succeeded" &&
-                      states.map((s, i) => (
-                        <option key={i} value={s.state}>
-                          {s.state}
-                        </option>
-                      ))}
-                  </select>
-                </div>
 
-                <div className="col-md-4">
-                  <label htmlFor="district" className="form-label">
-                    District
-                  </label>
-                  <select
-                    id="district"
-                    name="district"
-                    className="form-select"
-                    onChange={handleChange}
-                    value={formik.values.district}
-                    disabled={!formik.values.state}
-                  >
-                    <option value="">Select District</option>
-                    {districts.map((d, idx) => (
-                      <option key={idx} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-md-4">
-                  <label htmlFor="city" className="form-label">
-                    City
-                  </label>
-                  <input
-                    text="text"
-                    id="city"
-                    name="city"
-                    className="form-control"
-                  />
-                </div>
-
-                <div className="col-md-4 mt-3 mt-md-0">
-                  <label htmlFor="country" className="form-label">
-                    Country
-                  </label>
-                  <select
-                    id="country"
-                    name="country"
-                    className="form-select"
-                    disabled
-                  >
-                    <option value="India">India</option>
-                  </select>
-                </div>
-                <div className="col-md-4 mt-3 mt-md-0">
-                  <label htmlFor="pincode" className="form-label">
-                    Pincode
-                  </label>
-                  <input
-                    type="text"
-                    id="pincode"
-                    name="pincode"
-                    className="form-control"
-                  />
-                </div>
-              </div>
-            </div>
             <div className="row mb-3">
               <div className="col-md-6">
-                <label className="form-label">Joining Date</label>
-                <input
-                  type="date"
-                  name="joiningdate"
-                  value={formik.values.joiningdate}
-                  onChange={formik.handleChange}
-                  className="form-control"
-                />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Blood Group</label>
+                <label htmlFor="country" className="form-label">
+                  Country
+                </label>
                 <select
-                  name="bloodGroup"
+                  id="country"
+                  name="country"
                   className="form-select"
-                  value={formik.values.bloodGroup}
-                  onChange={formik.handleChange}
+                  value={formik.values.country}
+                  disabled
                 >
-                  <option value="">Select Blood Group</option>
-                  {BloodGroupOptions?.map((group, idx) => {
-                    return (
-                      <option key={idx} value={group.value || group}>
-                        {group.label || group}
-                      </option>
-                    );
-                  })}
+                  <option value="India">India</option>
                 </select>
-              </div>
-            </div>
-            {/* ID Proof Upload */}
-            <div className="row mb-3">
-              <div className="col-md-6">
-                <label className="form-label">Select Id Proof </label>
-                <select
-                  name="idProofType"
-                  className="form-select"
-                  value={formik.values.idProofType}
-                  onChange={formik.handleChange}
-                >
-                  <option value="">Select Id Proof</option>
-                  {IdProofTypeOptions?.map((idProof, idx) => {
-                    return (
-                      <option key={idx} value={idProof.value || idProof}>
-                        {idProof.label || idProof}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Upload Id Proof</label>
-                <input
-                  type="file"
-                  name="idProof"
-                  onChange={handleFileChange}
-                  className="form-control"
-                />
-              </div>
-            </div>
-            {/* Profile & Role  */}
-            <div className="row mb-4">
-              <div className="col-md-6">
-                <label className="form-label">Profile Picture</label>
-                <input
-                  type="file"
-                  name="profilePic"
-                  onChange={handleFileChange}
-                  className="form-control"
-                />
               </div>
 
               <div className="col-md-6">
-                <label className="form-label">Role</label>
-                <select
-                  name="role"
-                  className="form-select"
-                  value={formik.values.role}
+                <label htmlFor="pincode" className="form-label">
+                  Pincode
+                </label>
+                <input
+                  type="text"
+                  id="pincode"
+                  name="pincode"
+                  className="form-control"
+                  value={formik.values.pincode}
                   onChange={formik.handleChange}
-                >
-                  <option value="">Select Role</option>
-                  {RoleNameOptions?.map((role, idx) => {
-                    return (
-                      <option key={idx} value={role.value || role}>
-                        {role.label || role}
-                      </option>
-                    );
-                  })}
-                </select>
+                />
               </div>
             </div>
-            {renderRoleSpecificFields()}
-            {/* Buttons */}
-            <div className="text-center">
-              <button
-                type="submit"
-                className="btn text-white px-4 me-2 "
-                style={{ backgroundColor: "#01C0C8" }}
+          </div>
+
+          {/* ID Proof Upload */}
+          <div className="row mb-3">
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">Select Id Proof</label>
+              <select
+                name="idProofType"
+                className="form-select"
+                value={formik.values.idProofType}
+                onChange={formik.handleChange}
               >
-                Register
-              </button>
-              <button type="reset" className="btn btn-secondary px-4">
-                Reset
-              </button>
+                <option value="">Select Id Proof</option>
+                {IdProofTypeOptions?.map((idProof, idx) => (
+                  <option key={idx} value={idProof.value || idProof}>
+                    {idProof.label || idProof}
+                  </option>
+                ))}
+              </select>
             </div>
-          </form>
-        </div>
+
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">Upload Id Proof</label>
+              <input
+                type="file"
+                name="idProof"
+                onChange={handleFileChange}
+                className="form-control"
+              />
+            </div>
+          </div>
+
+          {/* Profile & Role */}
+          <div className="row mb-4">
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">Profile Picture</label>
+              <input
+                type="file"
+                name="profilePic"
+                onChange={handleFileChange}
+                className="form-control"
+              />
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">Role</label>
+              <select
+                name="role"
+                className="form-select"
+                value={formik.values.role}
+                onChange={formik.handleChange}
+              >
+                <option value="">Select Role</option>
+                {RoleNameOptions?.map((role, idx) => (
+                  <option key={idx} value={role.value}>
+                    {role.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {renderRoleSpecificFields()}
+
+          {/* Buttons: use type="submit" so formik.handleSubmit runs */}
+          <div className="text-center">
+            <button
+              type="submit"
+              className="btn text-white px-4 me-2"
+              style={{ backgroundColor: "#01C0C8" }}
+              disabled={formik.isSubmitting}
+            >
+              {formik.isSubmitting ? "Submitting..." : "Register"}
+            </button>
+            <button type="reset" className="btn btn-secondary px-4">
+              Reset
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

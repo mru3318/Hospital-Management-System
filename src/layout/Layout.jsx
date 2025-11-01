@@ -151,12 +151,7 @@ const Layout = () => {
               >
                 <ul className="nav flex-column sub-menu">
                   <li className="nav-item">
-                    <NavLink
-                      to="add-new-employee"
-                      className={({ isActive }) =>
-                        "nav-link" + (isActive ? " active" : "")
-                      }
-                    >
+                    <NavLink className="nav-link" to="add-new-employee">
                       Add Employee
                     </NavLink>
                   </li>
