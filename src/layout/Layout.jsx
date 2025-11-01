@@ -12,8 +12,10 @@ const Layout = () => {
     if (sidebar) sidebar.classList.toggle("active");
   };
 
-  const isUiBasicOpen = location.pathname.startsWith("/add-new-employee");
-  const isFormsOpen = location.pathname.startsWith("/add-doctor");
+  // const isUiBasicOpen =
+  //   location.pathname === "/add-new-employee" ||
+  //   location.pathname === "/manage-employees";
+  // const isFormsOpen = location.pathname === "/add-doctor";
 
   return (
     <div className="container-scroller">
@@ -138,14 +140,14 @@ const Layout = () => {
                 className="nav-link"
                 data-bs-toggle="collapse"
                 href="#ui-basic"
-                aria-expanded={isUiBasicOpen}
+                // aria-expanded={isUiBasicOpen}
                 aria-controls="ui-basic"
               >
                 <span className="menu-title">Human Resources</span>
                 <i className="fa fa-users menu-icon" />
               </a>
               <div
-                className={"collapse" + (isUiBasicOpen ? " show" : "")}
+                // className={"collapse" + (isUiBasicOpen ? " show" : "")}
                 id="ui-basic"
                 data-bs-parent="#sidebar"
               >
@@ -194,14 +196,14 @@ const Layout = () => {
                 className="nav-link"
                 data-bs-toggle="collapse"
                 href="#forms"
-                aria-expanded={isFormsOpen}
+                // aria-expanded={isFormsOpen}
                 aria-controls="forms"
               >
                 <span className="menu-title">Doctor</span>
                 <i className="fa fa-user-md menu-icon" />
               </a>
               <div
-                className={"collapse" + (isFormsOpen ? " show" : "")}
+                // className={"collapse" + (isFormsOpen ? " show" : "")}
                 id="forms"
                 data-bs-parent="#sidebar"
               >

@@ -17,6 +17,7 @@ const EmployeeRegistration = () => {
   const { list: states, status: statesStatus } = useSelector(
     (state) => state.states
   );
+  const departments = useSelector((state) => state.departments?.list || []);
 
   const [districts, setDistricts] = useState([]);
   const [passwordRules, setPasswordRules] = useState({
@@ -25,8 +26,6 @@ const EmployeeRegistration = () => {
     special: false,
   });
   const [passwordMatch, setPasswordMatch] = useState("");
-
-  const { departments } = useSelector((state) => state.departments);
 
   // 1) Include all expected keys in initialValues (use consistent names)
   const formik = useFormik({
@@ -57,6 +56,9 @@ const EmployeeRegistration = () => {
       experience: "",
       qualification: "",
       category: "",
+      specialization: "",
+      licenseNumber: "",
+      department: "",
     },
     validationSchema: Yup.object({
       firstName: Yup.string().required("First name is required"),
@@ -109,21 +111,26 @@ const EmployeeRegistration = () => {
           },
         };
 
-        //fetch department from redux store
-        const selectedDepartment = departments.find(
-          (dept) => dept.department_name === values.department
-        );
-        const departmentId = selectedDepartment ? selectedDepartment.id : null;
-
         // Add role-based nested DTO (example for Doctor)
         if (String(values.role) === "3") {
           payload.doctorDto = {
-            specialization: values.specialization,
-            experience: values.experience,
-            qualifications: values.qualification,
-            licenseNumber: values.licenseNumber,
-            departmentId: values.department ? Number(values.department) : null,
+            specialization: values.specialization || "",
+            experience: values.experience || "",
+            qualifications: values.qualification || "", // note: server expects 'qualifications' (plural)
+            licenseNumber: values.licenseNumber || "",
+            departmentId: values.department ? Number(values.department) : 3, // default departmentId
           };
+        } else if ([7, 10, 5, 4, 6, 9, 8].includes(Number(values.role))) {
+          // Other roles - add common employee fields
+          payload.employeeDto = {
+            experience: values.experience || "",
+            qualification: values.qualification || "",
+          };
+
+          if (String(values.role) === "8") {
+            // Laboratorist
+            payload.employeeDto.category = values.category || "";
+          }
         }
 
         // Build FormData for files + payload JSON
@@ -230,50 +237,54 @@ const EmployeeRegistration = () => {
       (r) => String(r.value) === String(role)
     );
     const roleLabel = roleLabelObj ? roleLabelObj.label : role;
-    const commonFields = (fields) =>
-      fields.map((field) => (
-        <div className="mb-3" key={field.name}>
-          <label className="form-label">{field.label}</label>
-
-          {field.name === "experience" ? (
-            <select
-              name={field.name}
-              value={formik.values[field.name]}
-              onChange={formik.handleChange}
-              className="form-select"
-            >
-              <option value="">Select Experience</option>
-              {ExperienceLevel.map((exp) => (
-                <option key={exp.value} value={exp.value}>
-                  {exp.label}
-                </option>
-              ))}
-            </select>
-          ) : field.name === "department" ? (
-            <select
-              name={field.name}
-              value={formik.values[field.name]}
-              onChange={formik.handleChange}
-              className="form-select"
-            >
-              <option value="">Select Department</option>
-              {departments?.map((dept) => (
-                <option key={dept.id} value={dept.department_name}>
-                  {dept.department_name}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              type="text"
-              name={field.name}
-              value={formik.values[field.name]}
-              onChange={formik.handleChange}
-              className="form-control"
-            />
-          )}
+    const commonFields = (fields) => {
+      return (
+        <div className="row">
+          {fields.map((field) => (
+            <div className="col-12 col-md-6 mb-3" key={field.name}>
+              <label className="form-label">{field.label}</label>
+              {field.name === "experience" ? (
+                <select
+                  name={field.name}
+                  value={formik.values[field.name]}
+                  onChange={formik.handleChange}
+                  className="form-select"
+                >
+                  <option value="">Select Experience</option>
+                  {ExperienceLevel.map((exp) => (
+                    <option key={exp.value} value={exp.value}>
+                      {exp.label}
+                    </option>
+                  ))}
+                </select>
+              ) : field.name === "department" ? (
+                <select
+                  name={field.name}
+                  value={formik.values[field.name]}
+                  onChange={formik.handleChange}
+                  className="form-select"
+                >
+                  <option value="">Select Department</option>
+                  {departments?.map((dept) => (
+                    <option key={dept.id} value={dept.department_name}>
+                      {dept.department_name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  name={field.name}
+                  value={formik.values[field.name]}
+                  onChange={formik.handleChange}
+                  className="form-control"
+                />
+              )}
+            </div>
+          ))}
         </div>
-      ));
+      );
+    };
 
     switch (String(role)) {
       case "3":
