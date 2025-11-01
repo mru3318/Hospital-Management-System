@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { GenderOptions } from "../../../../constants";
+import { BloodGroupOptions, GenderOptions } from "../../../../constants";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchStates } from "../../../features/statesSlice";
+import { IdProofTypeOptions } from "../../../../constants";
+import { RoleNameOptions } from "../../../../constants";
 
 const EmployeeRegistration = () => {
   const dispatch = useDispatch();
@@ -38,6 +40,7 @@ const EmployeeRegistration = () => {
       age: "",
       addressLine1: "",
       addressLine2: "",
+      idProofType: "",
       state: "",
       district: "",
       city: "",
@@ -177,6 +180,9 @@ const EmployeeRegistration = () => {
   // ---------------- Role-Based Fields ----------------
   const renderRoleSpecificFields = () => {
     const { role } = formik.values;
+    // find human-friendly label for the selected role (RoleNameOptions stores values like 'DOCTOR')
+    const roleLabelObj = RoleNameOptions?.find((r) => r.value === role);
+    const roleLabel = roleLabelObj ? roleLabelObj.label : role;
     const commonFields = (fields) => (
       <div className="row mt-3">
         {fields.map((f, idx) => (
@@ -211,10 +217,10 @@ const EmployeeRegistration = () => {
     );
 
     switch (role) {
-      case "Doctor":
+      case "DOCTOR":
         return (
           <div id="doctorFields" className="mt-3">
-            <h5>Doctor Specific Fields</h5>
+            <h5>{roleLabel} Specific Fields</h5>
             {commonFields([
               { label: "Experience", name: "experience" },
               { label: "Department", name: "department" },
@@ -225,24 +231,24 @@ const EmployeeRegistration = () => {
           </div>
         );
       case "HR":
-      case "Receptionist":
-      case "Pharmacist":
-      case "Head Nurse":
-      case "Accountant":
-      case "Insurer":
+      case "RECEPTIONIST":
+      case "PHARMACIST":
+      case "HEAD_NURSE":
+      case "ACCOUNTANT":
+      case "INSURANCE":
         return (
           <div id={`${role.toLowerCase()}Fields`} className="mt-3">
-            <h5>{role} Specific Fields</h5>
+            <h5>{roleLabel} Specific Fields</h5>
             {commonFields([
               { label: "Experience", name: "experience" },
               { label: "Qualification", name: "qualification" },
             ])}
           </div>
         );
-      case "Lab Technician":
+      case "LABORATORIST":
         return (
           <div id="labTechFields" className="mt-3">
-            <h5>Lab Technician Specific Fields</h5>
+            <h5>{roleLabel} Specific Fields</h5>
             {commonFields([
               {
                 label: "Category",
@@ -319,7 +325,6 @@ const EmployeeRegistration = () => {
                 <div className="invalid-feedback">{formik.errors.lastName}</div>
               </div>
             </div>
-
             {/* Contact Fields */}
             <div className="row mb-3">
               <div className="col-md-6">
@@ -362,7 +367,27 @@ const EmployeeRegistration = () => {
                 <div className="invalid-feedback">{formik.errors.email}</div>
               </div>
             </div>
-
+            {/* username field */}
+            <div class="row mb-3">
+              <div className=" col-md-6">
+                <label className="form-label fw-semibold">
+                  Username <span style={{ color: "red" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  name="username"
+                  value={formik.values.username}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  className={`form-control ${
+                    formik.touched.username && formik.errors.username
+                      ? "is-invalid"
+                      : ""
+                  }`}
+                />
+                <div className="invalid-feedback">{formik.errors.username}</div>
+              </div>
+            </div>
             {/* Password Fields */}
             <div className="row mb-3">
               <div className="col-md-6">
@@ -416,7 +441,6 @@ const EmployeeRegistration = () => {
                 )}
               </div>
             </div>
-
             {/* Password Rules */}
             <ul className="list-unstyled small mb-4">
               <li style={{ color: passwordRules.uppercase ? "green" : "red" }}>
@@ -429,7 +453,6 @@ const EmployeeRegistration = () => {
                 Must include one special character
               </li>
             </ul>
-
             {/* Gender / DOB / Age */}
             <div className="row mb-3">
               <div className="col-md-4">
@@ -469,7 +492,6 @@ const EmployeeRegistration = () => {
                 />
               </div>
             </div>
-
             {/* Address */}
             <div className="border rounded p-3 mb-3">
               <h5 className="fw-bold mb-3">Address Details</h5>
@@ -585,8 +607,67 @@ const EmployeeRegistration = () => {
                 </div>
               </div>
             </div>
-
-            {/* Profile & Role */}
+            <div className="row mb-3">
+              <div className="col-md-6">
+                <label className="form-label">Joining Date</label>
+                <input
+                  type="date"
+                  name="joiningdate"
+                  value={formik.values.joiningdate}
+                  onChange={formik.handleChange}
+                  className="form-control"
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Blood Group</label>
+                <select
+                  name="bloodGroup"
+                  className="form-select"
+                  value={formik.values.bloodGroup}
+                  onChange={formik.handleChange}
+                >
+                  <option value="">Select Blood Group</option>
+                  {BloodGroupOptions?.map((group, idx) => {
+                    return (
+                      <option key={idx} value={group.value || group}>
+                        {group.label || group}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            </div>
+            {/* ID Proof Upload */}
+            <div className="row mb-3">
+              <div className="col-md-6">
+                <label className="form-label">Select Id Proof </label>
+                <select
+                  name="idProofType"
+                  className="form-select"
+                  value={formik.values.idProofType}
+                  onChange={formik.handleChange}
+                >
+                  <option value="">Select Id Proof</option>
+                  {IdProofTypeOptions?.map((idProof, idx) => {
+                    return (
+                      <option key={idx} value={idProof.value || idProof}>
+                        {idProof.label || idProof}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Upload Id Proof</label>
+                <input
+                  type="file"
+                  name="idProof"
+                  onChange={handleFileChange}
+                  className="form-control"
+                />
+              </div>
+            </div>
+            {/* Profile & Role  */}
             <div className="row mb-4">
               <div className="col-md-6">
                 <label className="form-label">Profile Picture</label>
@@ -597,6 +678,7 @@ const EmployeeRegistration = () => {
                   className="form-control"
                 />
               </div>
+
               <div className="col-md-6">
                 <label className="form-label">Role</label>
                 <select
@@ -606,20 +688,17 @@ const EmployeeRegistration = () => {
                   onChange={formik.handleChange}
                 >
                   <option value="">Select Role</option>
-                  <option>Doctor</option>
-                  <option>HR</option>
-                  <option>Lab Technician</option>
-                  <option>Receptionist</option>
-                  <option>Pharmacist</option>
-                  <option>Head Nurse</option>
-                  <option>Accountant</option>
-                  <option>Insurer</option>
+                  {RoleNameOptions?.map((role, idx) => {
+                    return (
+                      <option key={idx} value={role.value || role}>
+                        {role.label || role}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             </div>
-
             {renderRoleSpecificFields()}
-
             {/* Buttons */}
             <div className="text-center">
               <button
